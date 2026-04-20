@@ -1,14 +1,14 @@
 <?php
-
 /*
-Plugin Name: Star Citizen Referral Randomizer
-Plugin URI: https://github.com/ulrichdahl/sc-referral-system
-GitHub Plugin URI: https://github.com/ulrichdahl/sc-referral-system
-Description: Et system der fordeler Star Citizen referral codes retfærdigt via AJAX, opdatering via Discord, og Admin panel.
-Version: 1.3
-Author: Ulrich Dahl <ulrich.dahl@gmail.com>
-Author URI: https://github.com/ulrichdahl
-License: GPL2
+ * Plugin Name: Star Citizen Referral Randomizer
+ * Plugin URI: https://github.com/ulrichdahl/WP-StarReferrals
+ * Description: A system that distributes Star Citizen referral codes fairly via AJAX, updates via Discord, and an admin panel.
+ * Version: 1.3.1
+ * Author: Ulrich Dahl <ulrich.dahl@gmail.com>
+ * Author URI: https://github.com/ulrichdahl
+ * License: GPL3
+ * Text Domain: sc-referral-system
+ * Tool: OpenCode, LM Studio, Gemma4
 */
 
 if (!defined('ABSPATH')) exit;
@@ -42,18 +42,75 @@ function sc_referral_create_table() {
 // ---------------------------------------------------------
 // 2. ADMIN SIDE (NYT: Vis liste og Nulstil knap)
 // ---------------------------------------------------------
+
+
+$sc_menu_slug = 'star-citizen';
+function sc_referral_menu_exists(): bool
+{
+    global $menu, $sc_menu_slug;
+    if (!is_array($menu)) {
+        return false;
+    }
+    foreach ( $menu as $item ) {
+        if ( $item[2] == $sc_menu_slug ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 add_action('admin_menu', 'sc_referral_add_admin_menu');
+add_action('admin_menu', function() {
+    global $sc_menu_slug;
+    if (sc_referral_menu_exists()) remove_submenu_page($sc_menu_slug, $sc_menu_slug);
+}, 999);
+add_action('admin_head', 'sc_referral_fix_svg_size');
+
+function sc_referral_fix_svg_size() {
+    global $sc_menu_slug;
+    if (sc_referral_menu_exists()) echo '
+    <style>
+        /* Målret billedet i dit specifikke menupunkt */
+        #toplevel_page_'.$sc_menu_slug.' .wp-menu-image img {
+            width: 20px !important;   /* WordPress ikoner er 20x20 */
+            height: 20px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-sizing: border-box;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Centrer ikonet i cirklen/feltet */
+        #toplevel_page_'.$sc_menu_slug.' .wp-menu-image {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+    ';
+}
 
 function sc_referral_add_admin_menu() {
-	// Tilføjer menu under "Indstillinger" eller som hovedmenu
-	add_menu_page(
+    if (!sc_referral_menu_exists()) {
+        add_menu_page(
+                'Star Citizen', // Page title
+                'Star Citizen', // Menu title
+                'manage_options', // Capability
+                'star-citizen', // Menu slug
+                null, // Callback function
+                plugins_url('sc-referral-system/assets/scc-logo.svg', 'sc-localization'), // Icon (WordPress Dashicon)
+                26
+        );
+    }
+    add_submenu_page(
+        'star-citizen', // Parent slug
 		'Star Citizen Referrals', // Side titel
-		'SC Referrals',           // Menu titel
+		'Referrals',           // Menu titel
 		'manage_options',         // Rettighed krævet
 		'sc-referrals',           // Menu slug
 		'sc_referral_options_page', // Callback funktion
-		'dashicons-groups',       // Ikon
-		25                         // Position
+		5                         // Position
 	);
 }
 
