@@ -3,7 +3,7 @@
  * Plugin Name: Star Citizen Referral Randomizer
  * Plugin URI: https://github.com/ulrichdahl/WP-StarReferrals
  * Description: A system that distributes Star Citizen referral codes fairly via AJAX, updates via Discord, and an admin panel.
- * Version: 1.3.1
+ * Version: 1.3.2
  * Author: Ulrich Dahl <ulrich.dahl@gmail.com>
  * Author URI: https://github.com/ulrichdahl
  * License: GPL3
@@ -445,7 +445,7 @@ function sc_render_button($atts) {
 				success: function(response) {
 					if (response.success) {
 						var url = "https://robertsspaceindustries.com/enlist?referral=" + response.data.code;
-						window.open(url, "_blank");
+						window.location.href = url;
 						btn.removeClass("sc-loading").text(window.scReferralStrings.buttonText);
 					} else {
 						alert(window.scReferralStrings.errorLabel + " " + response.data.message);
