@@ -87,6 +87,45 @@ This renders a button that:
 2. selects a fair code from the pool
 3. opens the RSI enlist URL in a new tab with the referral attached
 
+### Gleam mode
+
+```plain text
+[sc_referrals_gleam]
+```
+
+Use this shortcode on a page you link to from a Gleam **custom action with API tracking**. The Gleam action is only reported as completed once the visitor's new RSI account has been verified.
+
+Flow:
+
+1. The visitor clicks **Create Star Citizen Account**. A token is created and tied to a referral code picked with the same fairness rules as the normal button. The RSI enlist page opens in a new tab with that code.
+2. After signing up, the visitor returns to the page and enters their RSI handle.
+3. The plugin loads the public RSI citizen page (`/citizens/<handle>`) and checks that:
+    - the account exists
+    - it was enlisted on or after the day the token was issued (one day of slack for time zones)
+    - the handle hasn't already been used for another token
+4. If the checks pass, the page reports the action to Gleam (`gleam.track('<action>')`, plus the `Gleam.push([...])` queue) and fires a `sc-gleam-verified` DOM event.
+
+Setup (WordPress Admin → Star Citizen → **Referrals: Gleam**):
+
+- **Gleam action name**: must exactly match the API-tracking action name in your Gleam campaign
+- **Gleam tracking snippet**: paste the script Gleam gives you for API tracking (requires the `unfiltered_html` capability)
+- **Token lifetime**: how many days a visitor has to sign up and verify
+
+The same page lists every issued token with its handle and status.
+
+Limitations:
+
+- RSI doesn't publicly show which referral code an account used. The check proves that a *new* account was created after the visitor clicked the link, not that the code was applied.
+- `gleam.track()` runs in the visitor's browser, so a determined user could trigger it manually. Use Gleam's own entry review for high-value prizes.
+- The enlisted date is read from RSI's HTML. If RSI changes its markup, use the `sc_gleam_enlisted_timestamp` filter to supply the timestamp:
+
+```php
+add_filter('sc_gleam_enlisted_timestamp', function ($timestamp, $html, $handle) {
+    // return a UTC unix timestamp, or false
+    return $timestamp;
+}, 10, 3);
+```
+
 ---
 
 ## REST API
@@ -247,6 +286,10 @@ languages/sc-referral-system-da_DK.mo
 ### `[sc_referrals_button]`
 
 Displays the frontend button for fetching a referral code.
+
+### `[sc_referrals_gleam]`
+
+Displays the two-step Gleam flow (referral signup + RSI handle verification). See [Gleam mode](#gleam-mode).
 
 ---
 
